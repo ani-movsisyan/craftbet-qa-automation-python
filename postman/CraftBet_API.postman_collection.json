@@ -1,0 +1,765 @@
+{
+  "info": {
+    "name": "CraftBet API",
+    "description": "10 GET requests, one for each data category of the task. Endpoints were found in DevTools (Network tab) on craftbet.com.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// checks for every request",
+          "pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));",
+          "pm.test(\"Response time is less than 3s\", () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+          "pm.test(\"Response is JSON\", () => pm.response.to.be.json);"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "01 Account Status",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// client data needs token of logged in user (see README)",
+              "if (!pm.environment.get(\"token\")) {",
+              "    console.log(\"token is empty, request skipped\");",
+              "    pm.execution.skipRequest();",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "{",
+              "    const json = pm.response.json();",
+              "    pm.test(\"ResponseCode is 0\", () => pm.expect(json.ResponseCode, json.Description).to.eql(0));",
+              "    pm.test(\"Account is found by token\", () => pm.expect(json.Id).to.be.above(0));",
+              "    pm.test(\"Account has currency and verification status\", () => {",
+              "        pm.expect(json.CurrencyId).to.be.a(\"string\").and.not.empty;",
+              "        pm.expect(json.IsEmailVerified).to.be.a(\"boolean\");",
+              "    });",
+              "    if (json.Id > 0) {",
+              "        // saved for next requests",
+              "        pm.environment.set(\"clientId\", json.Id);",
+              "        pm.environment.set(\"currencyId\", json.CurrencyId);",
+              "        // server gives a new session token here, the old one stops working (the site does the same)",
+              "        if (json.Token) {",
+              "            pm.environment.set(\"token\", json.Token);",
+              "        }",
+              "    } else {",
+              "        pm.environment.set(\"token\", \"\");  // wrong token - other requests will be skipped",
+              "    }",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{siteUrl}}"
+          },
+          {
+            "key": "Referer",
+            "value": "{{siteUrl}}/"
+          }
+        ],
+        "url": {
+          "raw": "{{webApi}}/1/api/Main/GetClientByToken",
+          "host": [
+            "{{webApi}}"
+          ],
+          "path": [
+            "1",
+            "api",
+            "Main",
+            "GetClientByToken"
+          ]
+        },
+        "description": "Account status and details by token. Run first: saves clientId and currencyId.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"LanguageId\": \"{{languageId}}\",\n  \"Token\": \"{{token}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      }
+    },
+    {
+      "name": "02 Client Information",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// client data needs token of logged in user (see README)",
+              "if (!pm.environment.get(\"token\")) {",
+              "    console.log(\"token is empty, request skipped\");",
+              "    pm.execution.skipRequest();",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "{",
+              "    const json = pm.response.json();",
+              "    pm.test(\"ResponseCode is 0\", () => pm.expect(json.ResponseCode, json.Description).to.eql(0));",
+              "    pm.test(\"It is my profile\", () => pm.expect(json.Id).to.eql(Number(pm.environment.get(\"clientId\"))));",
+              "    pm.test(\"Profile has user name or email\", () => pm.expect(json.UserName || json.Email).to.be.a(\"string\").and.not.empty);",
+              "    pm.test(\"Password is not returned\", () => pm.expect(json.Password == null || json.Password === \"\").to.be.true);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{siteUrl}}"
+          },
+          {
+            "key": "Referer",
+            "value": "{{siteUrl}}/"
+          }
+        ],
+        "url": {
+          "raw": "{{webApi}}/1/api/Main/GetClientInfo",
+          "host": [
+            "{{webApi}}"
+          ],
+          "path": [
+            "1",
+            "api",
+            "Main",
+            "GetClientInfo"
+          ]
+        },
+        "description": "Customer profile details.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"PartnerId\": 1,\n  \"LanguageId\": \"{{languageId}}\",\n  \"TimeZone\": {{timeZone}},\n  \"Token\": \"{{token}}\",\n  \"ClientId\": {{clientId}}\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      }
+    },
+    {
+      "name": "03 Account Balance",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// client data needs token of logged in user (see README)",
+              "if (!pm.environment.get(\"token\")) {",
+              "    console.log(\"token is empty, request skipped\");",
+              "    pm.execution.skipRequest();",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "{",
+              "    const json = pm.response.json();",
+              "    pm.test(\"ResponseCode is 0\", () => pm.expect(json.ResponseCode, json.Description).to.eql(0));",
+              "    pm.test(\"Balance is a number >= 0\", () => pm.expect(json.AvailableBalance).to.be.a(\"number\").and.at.least(0));",
+              "    pm.test(\"Currency is my currency\", () => pm.expect(json.CurrencyId).to.eql(pm.environment.get(\"currencyId\")));",
+              "    pm.test(\"Balances list is returned\", () => pm.expect(json.Balances).to.be.an(\"array\"));",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{siteUrl}}"
+          },
+          {
+            "key": "Referer",
+            "value": "{{siteUrl}}/"
+          }
+        ],
+        "url": {
+          "raw": "{{webApi}}/1/api/Main/GetClientBalance",
+          "host": [
+            "{{webApi}}"
+          ],
+          "path": [
+            "1",
+            "api",
+            "Main",
+            "GetClientBalance"
+          ]
+        },
+        "description": "Current account balance.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"PartnerId\": 1,\n  \"Token\": \"{{token}}\",\n  \"ClientId\": {{clientId}},\n  \"RequestData\": \"{\\\"CurrencyId\\\":\\\"{{currencyId}}\\\"}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      }
+    },
+    {
+      "name": "04 Payment Methods",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// client data needs token of logged in user (see README)",
+              "if (!pm.environment.get(\"token\")) {",
+              "    console.log(\"token is empty, request skipped\");",
+              "    pm.execution.skipRequest();",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "{",
+              "    const json = pm.response.json();",
+              "    pm.test(\"ResponseCode is 0\", () => pm.expect(json.ResponseCode, json.Description).to.eql(0));",
+              "    pm.test(\"Payment methods list is returned\", () => pm.expect(json.PartnerPaymentSystems).to.be.an(\"array\"));",
+              "    pm.test(\"Every payment method has id\", () => json.PartnerPaymentSystems.forEach(p => pm.expect(p).to.have.property(\"Id\")));",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{siteUrl}}"
+          },
+          {
+            "key": "Referer",
+            "value": "{{siteUrl}}/"
+          }
+        ],
+        "url": {
+          "raw": "{{webApi}}/1/api/Main/GetPartnerPaymentSystems",
+          "host": [
+            "{{webApi}}"
+          ],
+          "path": [
+            "1",
+            "api",
+            "Main",
+            "GetPartnerPaymentSystems"
+          ]
+        },
+        "description": "Payment methods available for deposit (Type 2).",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"PartnerId\": 1,\n  \"LanguageId\": \"{{languageId}}\",\n  \"Token\": \"{{token}}\",\n  \"ClientId\": {{clientId}},\n  \"Type\": 2\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      }
+    },
+    {
+      "name": "05 Game Information",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "{",
+              "    const json = pm.response.json();",
+              "    pm.test(\"ResponseCode is 0\", () => pm.expect(json.ResponseCode, json.Description).to.eql(0));",
+              "    const game = json.ResponseObject;",
+              "    pm.test(\"Game has name and provider\", () => {",
+              "        pm.expect(game.Name).to.be.a(\"string\").and.not.empty;",
+              "        pm.expect(game.ProviderName).to.be.a(\"string\").and.not.empty;",
+              "    });",
+              "    pm.test(\"Game picture belongs to this game\", () => pm.expect(game.ImageUrl).to.include(pm.environment.get(\"gameId\")));",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{siteUrl}}"
+          },
+          {
+            "key": "Referer",
+            "value": "{{siteUrl}}/"
+          }
+        ],
+        "url": {
+          "raw": "{{webApi}}/1/api/Main/GetProductInfo",
+          "host": [
+            "{{webApi}}"
+          ],
+          "path": [
+            "1",
+            "api",
+            "Main",
+            "GetProductInfo"
+          ]
+        },
+        "description": "Details of one casino game (gameId 1235685 = Hot Slice). Works without login.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"PartnerId\": 1,\n  \"LanguageId\": \"{{languageId}}\",\n  \"TimeZone\": {{timeZone}},\n  \"ProductId\": {{gameId}}\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      }
+    },
+    {
+      "name": "06 Deposit Information",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// client data needs token of logged in user (see README)",
+              "if (!pm.environment.get(\"token\")) {",
+              "    console.log(\"token is empty, request skipped\");",
+              "    pm.execution.skipRequest();",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "{",
+              "    const json = pm.response.json();",
+              "    pm.test(\"ResponseCode is 0\", () => pm.expect(json.ResponseCode, json.Description).to.eql(0));",
+              "    pm.test(\"It is my account\", () => pm.expect(json.Id).to.eql(Number(pm.environment.get(\"clientId\"))));",
+              "    pm.test(\"Total deposit amount is a number >= 0\", () => pm.expect(json.TotalDepositAmount).to.be.a(\"number\").and.at.least(0));",
+              "    pm.test(\"Deposit threshold flag is returned\", () => pm.expect(json.DepositThresholdReached).to.be.a(\"boolean\"));",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{siteUrl}}"
+          },
+          {
+            "key": "Referer",
+            "value": "{{siteUrl}}/"
+          }
+        ],
+        "url": {
+          "raw": "{{webApi}}/1/api/Main/GetClientInfo",
+          "host": [
+            "{{webApi}}"
+          ],
+          "path": [
+            "1",
+            "api",
+            "Main",
+            "GetClientInfo"
+          ]
+        },
+        "description": "Deposit information of the account: total deposit amount and deposit threshold.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"PartnerId\": 1,\n  \"LanguageId\": \"{{languageId}}\",\n  \"TimeZone\": {{timeZone}},\n  \"Token\": \"{{token}}\",\n  \"ClientId\": {{clientId}}\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      }
+    },
+    {
+      "name": "07 Withdrawal Information",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// client data needs token of logged in user (see README)",
+              "if (!pm.environment.get(\"token\")) {",
+              "    console.log(\"token is empty, request skipped\");",
+              "    pm.execution.skipRequest();",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "{",
+              "    const json = pm.response.json();",
+              "    pm.test(\"ResponseCode is 0\", () => pm.expect(json.ResponseCode, json.Description).to.eql(0));",
+              "    pm.test(\"Withdrawal methods list is returned\", () => pm.expect(json.PartnerPaymentSystems).to.be.an(\"array\"));",
+              "    pm.test(\"Every withdrawal method has id\", () => json.PartnerPaymentSystems.forEach(p => pm.expect(p).to.have.property(\"Id\")));",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{siteUrl}}"
+          },
+          {
+            "key": "Referer",
+            "value": "{{siteUrl}}/"
+          }
+        ],
+        "url": {
+          "raw": "{{webApi}}/1/api/Main/GetPartnerPaymentSystems",
+          "host": [
+            "{{webApi}}"
+          ],
+          "path": [
+            "1",
+            "api",
+            "Main",
+            "GetPartnerPaymentSystems"
+          ]
+        },
+        "description": "Withdrawal methods available for the account (Type 1 = withdrawal).",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"PartnerId\": 1,\n  \"LanguageId\": \"{{languageId}}\",\n  \"Token\": \"{{token}}\",\n  \"ClientId\": {{clientId}},\n  \"Type\": 1\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      }
+    },
+    {
+      "name": "08 Transaction History",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// client data needs token of logged in user (see README)",
+              "if (!pm.environment.get(\"token\")) {",
+              "    console.log(\"token is empty, request skipped\");",
+              "    pm.execution.skipRequest();",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "{",
+              "    const json = pm.response.json();",
+              "    pm.test(\"ResponseCode is 0\", () => pm.expect(json.ResponseCode, json.Description).to.eql(0));",
+              "    const totals = [\"TotalDepositAmount\", \"TotalWithdrawalAmount\", \"TotalBetAmount\", \"TotalWinAmount\"];",
+              "    pm.test(\"Totals of all transaction types are numbers >= 0\", () => {",
+              "        totals.forEach(t => pm.expect(json[t], t).to.be.a(\"number\").and.at.least(0));",
+              "    });",
+              "    pm.test(\"Withdrawals are not bigger than deposits + wins\", () => {",
+              "        pm.expect(json.TotalWithdrawalAmount).to.be.at.most(json.TotalDepositAmount + json.TotalWinAmount);",
+              "    });",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{siteUrl}}"
+          },
+          {
+            "key": "Referer",
+            "value": "{{siteUrl}}/"
+          }
+        ],
+        "url": {
+          "raw": "{{webApi}}/1/api/Main/GetClientInfo",
+          "host": [
+            "{{webApi}}"
+          ],
+          "path": [
+            "1",
+            "api",
+            "Main",
+            "GetClientInfo"
+          ]
+        },
+        "description": "Summary of account transactions: deposits, withdrawals, bets, wins.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"PartnerId\": 1,\n  \"LanguageId\": \"{{languageId}}\",\n  \"TimeZone\": {{timeZone}},\n  \"Token\": \"{{token}}\",\n  \"ClientId\": {{clientId}}\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      }
+    },
+    {
+      "name": "09 Bonus Information",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "{",
+              "    const json = pm.response.json();",
+              "    pm.test(\"ResponseCode is 0\", () => pm.expect(json.ResponseCode, json.Description).to.eql(0));",
+              "    const bonuses = json.ResponseObject;",
+              "    pm.test(\"Available bonuses list is not empty\", () => pm.expect(bonuses).to.be.an(\"array\").that.is.not.empty);",
+              "    pm.test(\"Every bonus has name and price in points\", () => {",
+              "        bonuses.forEach(b => {",
+              "            pm.expect(b.Head).to.be.a(\"string\").and.not.empty;",
+              "            pm.expect(b.Price).to.be.a(\"number\").and.above(0);",
+              "        });",
+              "    });",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{siteUrl}}"
+          },
+          {
+            "key": "Referer",
+            "value": "{{siteUrl}}/"
+          }
+        ],
+        "url": {
+          "raw": "{{webApi}}/1/api/Main/GetPartnerShopItems",
+          "host": [
+            "{{webApi}}"
+          ],
+          "path": [
+            "1",
+            "api",
+            "Main",
+            "GetPartnerShopItems"
+          ]
+        },
+        "description": "Bonuses available in the bonus shop (free spins etc. for points). Works without login.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"PartnerId\": 1,\n  \"LanguageId\": \"{{languageId}}\",\n  \"TimeZone\": {{timeZone}}\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      }
+    },
+    {
+      "name": "10 Betting History",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "{",
+              "    const json = pm.response.json();",
+              "    pm.test(\"ResponseCode is 0\", () => pm.expect(json.ResponseCode, json.Description).to.eql(0));",
+              "    const bets = json.ResponseObject;",
+              "    pm.test(\"Bets list is returned\", () => pm.expect(bets).to.be.an(\"array\"));",
+              "    pm.test(\"Every bet has game, amount and date\", () => bets.forEach(b => {",
+              "        pm.expect(b.ProductName).to.be.a(\"string\");",
+              "        pm.expect(b.BetAmount).to.be.a(\"number\");",
+              "        pm.expect(b.BetDate).to.be.a(\"string\");",
+              "    }));",
+              "    pm.test(\"Only winning bets (winnersonly=true)\", () => bets.forEach(b => pm.expect(b.WinAmount).to.be.above(0)));",
+              "    pm.test(\"User names are hidden\", () => bets.forEach(b => pm.expect(b.UserName).to.match(/^\\*+/)));",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{siteUrl}}"
+          },
+          {
+            "key": "Referer",
+            "value": "{{siteUrl}}/"
+          }
+        ],
+        "url": {
+          "raw": "{{webApi}}/1/api/Main/getbets?timeZone={{timeZone}}&languageId={{languageId}}&winnersonly=true",
+          "host": [
+            "{{webApi}}"
+          ],
+          "path": [
+            "1",
+            "api",
+            "Main",
+            "getbets"
+          ],
+          "query": [
+            {
+              "key": "timeZone",
+              "value": "{{timeZone}}"
+            },
+            {
+              "key": "languageId",
+              "value": "{{languageId}}"
+            },
+            {
+              "key": "winnersonly",
+              "value": "true"
+            }
+          ]
+        },
+        "description": "Latest bets on the site (bets widget on home page). Works without login."
+      }
+    }
+  ]
+}

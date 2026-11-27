@@ -1,0 +1,44 @@
+20:36:20 INFO Header: Login with test account from .env
+20:36:27 INFO Header: Click menu item sport/prematch#/prematch
+20:36:27 INFO Header: Click menu item sport/live#/live
+20:36:27 INFO Header: Click menu item group/7
+20:36:28 INFO Header: Click menu item products/5
+20:36:30 INFO ContentPage: Open https://craftbet.com/info/terms
+20:36:31 INFO ContentPage: Open https://craftbet.com/info/privacy
+20:36:33 INFO ContentPage: Open https://craftbet.com/info/aml
+20:36:34 INFO CasinoPage: Open https://craftbet.com/group/7
+20:36:36 INFO CasinoPage: Select category Slots
+20:36:37 INFO CasinoPage: Select category Table Games
+20:36:38 INFO CasinoPage: Select category Top
+20:36:39 INFO Header: Click menu item group/7
+20:36:39 INFO Header: Click menu item products/5
+20:36:40 INFO CasinoPage: Open https://craftbet.com/group/7
+20:36:43 INFO GamePage: Open demo game: Hot Slice
+20:36:43 INFO GamePage: Open https://craftbet.com/game/1235685/demo/2
+20:37:02 INFO GamePage: Open demo game: Hot Triple Sevens
+20:37:02 INFO GamePage: Open https://craftbet.com/game/96211/demo/2
+20:37:22 INFO GamePage: Open demo game: Gates Of Olympus
+20:37:22 INFO GamePage: Open https://craftbet.com/game/54098/demo/2
+20:37:43 INFO test_games: Played demo games: ['Hot Slice', 'Hot Triple Sevens', 'Gates Of Olympus']
+20:37:44 INFO Header: Open https://craftbet.com/home
+20:37:45 INFO Header: Switch language to Русский
+20:37:47 INFO Header: Switch language to English
+20:37:49 INFO CasinoPage: Open https://craftbet.com/group/7
+20:37:51 INFO CasinoPage: Search game: book
+20:37:55 INFO CasinoPage: Open https://craftbet.com/group/7
+20:37:57 INFO CasinoPage: Search game: roulette
+20:38:01 INFO CasinoPage: Open https://craftbet.com/group/7
+20:38:04 INFO CasinoPage: Select category Favorites
+20:38:06 INFO CasinoPage: Open https://craftbet.com/group/7
+20:38:09 INFO AccountPage: Open https://craftbet.com/user/1/history
+20:38:10 INFO AccountPage: Open https://craftbet.com/user/1/transactions
+20:38:11 INFO AccountPage: Open https://craftbet.com/user/1/payments
+20:38:12 INFO AccountPage: Open https://craftbet.com/user/1/bonuses
+20:38:14 INFO Header: Click menu item sport/prematch#/prematch
+20:38:14 INFO Header: Click menu item products/5
+20:38:14 INFO CasinoPage: Open https://craftbet.com/group/7
+20:38:15 INFO CasinoPage: Select category Slots
+20:38:16 INFO CasinoPage: Search game: hot
+20:38:24 INFO GamePage: Open demo game: Hot Slice
+20:38:24 INFO GamePage: Open https://craftbet.com/game/1235685/demo/2
+20:38:43 INFO AccountPage: Open https://craftbet.com/user/1/history

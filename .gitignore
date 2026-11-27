@@ -1,0 +1,14 @@
+__pycache__/
+.pytest_cache/
+.venv/
+.idea/
+.vscode/
+
+# login and password are only in .env
+.env
+postman/*.local.json
+postman/newman/
+newman/
+
+# test run output (my saved results are in docs/results)
+reports/
